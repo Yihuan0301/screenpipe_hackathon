@@ -88,6 +88,5 @@ index.js          Programme principal (capture, extraction par modèle, fusion, 
 package.json      Déclaration des dépendances
 package-lock.json Versions figées des dépendances
 .gitignore        Ignore node_modules, .env, etc.
-README.md         Documentation (chinois)
-README.fr.md      Documentation (français)
+README.fr.md     Documentation (français)
 ```
