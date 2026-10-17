@@ -39,9 +39,10 @@ select, input[type="search"] {
 .btn:hover { background: #14120e; color: #fff; }
 
 main { padding: 0; }
+body { min-height: 100vh; }
 .drop {
-  margin: 16px 24px 0;
-  padding: 12px;
+  margin: 12px 24px 0;
+  padding: 6px;
   border: 1px dashed #14120e;
   text-align: center;
   color: #6b6558;
@@ -53,13 +54,14 @@ main { padding: 0; }
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0;
+  grid-template-rows: repeat(2, 1fr);
+  height: calc(100vh - 160px);
+  min-height: 520px;
   border-top: 1px solid #14120e;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 .card {
-  min-height: 240px;
-  padding: 28px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -69,15 +71,17 @@ main { padding: 0; }
   border-bottom: 1px solid #14120e;
 }
 .card:nth-child(3n) { border-right: none; }
-.card .label { font-size: 12px; letter-spacing: 2px; opacity: .75; }
+.card .label { font-size: 14px; letter-spacing: 3px; opacity: .8; }
 .card .big {
-  font-size: 56px;
+  font-size: clamp(40px, 6vw, 96px);
+  white-space: nowrap;
   font-weight: 800;
   line-height: 1.1;
   margin: 14px 0 8px;
   font-variant-numeric: tabular-nums;
 }
 .card .sub { font-size: 13px; opacity: .8; }
+.card .big.money { font-size: clamp(26px, 3vw, 44px); white-space: normal; line-height: 1.25; }
 .card .btn { margin-top: 18px; background: transparent; color: inherit; border-color: currentColor; }
 .card .btn:hover { background: currentColor; }
 .card .btn:hover { color: inherit; }

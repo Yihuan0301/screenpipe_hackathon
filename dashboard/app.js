@@ -71,8 +71,8 @@ function renderOverview() {
   const monitor = of('monitor');
   const review = of('review');
   const cards = [
-    { cls: 'c-red', label: '收入', big: sumByCurrency(revenue), sub: `${revenue.length} 笔（退款已计为负数）`, kind: 'revenue' },
-    { cls: 'c-black', label: '成本', big: sumByCurrency(cost), sub: `${cost.length} 张发票`, kind: 'cost' },
+    { cls: 'c-red', label: '收入', big: sumByCurrency(revenue), money: true, sub: `${revenue.length} 笔（退款已计为负数）`, kind: 'revenue' },
+    { cls: 'c-black', label: '成本', big: sumByCurrency(cost), money: true, sub: `${cost.length} 张发票`, kind: 'cost' },
     { cls: 'c-yellow', label: '监控事件', big: monitor.length, sub: '来自各平台的告警与变化', kind: 'monitor' },
     { cls: 'c-blue', label: '用户评价', big: review.length, sub: '来自社交平台的评价', kind: 'review' },
     { cls: 'c-sky', label: '记录总数', big: list.length, sub: '所有来源合计', kind: 'all' },
@@ -81,7 +81,7 @@ function renderOverview() {
   $('overview').innerHTML = cards.map(c => `
     <div class="card ${c.cls}">
       <div class="label">${esc(c.label)}</div>
-      <div class="big">${esc(c.big)}</div>
+      <div class="big${c.money ? ' money' : ''}">${esc(c.big)}</div>
       <div class="sub">${esc(c.sub)}</div>
       <button class="btn" data-detail="${c.kind}">明细</button>
     </div>`).join('');
