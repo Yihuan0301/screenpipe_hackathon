@@ -85,3 +85,18 @@ tr.reply td:first-child { padding-left: 28px; }
 .badge.yes { background: #dcfce7; color: #166534; }
 .badge.no { background: #fee2e2; color: #991b1b; }
 .badge.gap { background: #fef3c7; color: #92400e; }
+
+header .tabs { display: flex; gap: 4px; }
+.tabs button, .ghost {
+  padding: 6px 12px;
+  border: 1px solid #c8ccd4;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.tabs button.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+.table-wrap { overflow-x: auto; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+h3 { margin: 20px 0 8px; font-size: 15px; }
+[hidden] { display: none !important; }

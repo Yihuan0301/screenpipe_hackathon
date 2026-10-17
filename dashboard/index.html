@@ -9,19 +9,51 @@
 <body>
   <header>
     <h1>LaunchShadow 数据看板</h1>
+    <nav class="tabs">
+      <button data-tab="overview" class="active">概览</button>
+      <button data-tab="database">数据库</button>
+      <button data-tab="comments">评论</button>
+      <button data-tab="schema">格式说明</button>
+    </nav>
     <label class="file-btn">
       选择 JSON 文件
       <input type="file" id="file" accept=".json,application/json">
     </label>
+    <button id="demo-btn" class="ghost">加载 Demo 数据</button>
     <span id="source" class="muted">尚未加载数据</span>
   </header>
 
   <main>
-    <div id="drop" class="drop">或把 JSON 文件拖到这里</div>
+    <div id="drop" class="drop">或把 JSON 文件拖到这里（数据只在本地浏览器处理）</div>
 
-    <section class="stats" id="stats"></section>
+    <section data-panel="overview">
+      <div class="stats" id="kpis"></div>
+      <h3>按类型汇总</h3>
+      <table>
+        <thead><tr><th>类型</th><th>条数</th><th>金额合计（按币种，不换算）</th></tr></thead>
+        <tbody id="summary"></tbody>
+      </table>
+    </section>
 
-    <section>
+    <section data-panel="database" hidden>
+      <div class="toolbar">
+        <select id="db-kind"><option value="">全部类型</option></select>
+        <select id="db-source"><option value="">全部来源</option></select>
+        <input id="db-search" type="search" placeholder="搜索标题、详情、ref">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>kind</th><th>source</th><th>date</th><th>amount</th><th>currency</th>
+            <th>title</th><th>detail</th><th>ref</th><th>url</th>
+          </tr></thead>
+          <tbody id="db-rows"></tbody>
+        </table>
+      </div>
+      <p id="db-count" class="muted"></p>
+    </section>
+
+    <section data-panel="comments" hidden>
       <div class="toolbar">
         <input id="search" type="search" placeholder="搜索用户或内容">
         <select id="platform"><option value="">全部平台</option></select>
@@ -36,10 +68,18 @@
         </thead>
         <tbody id="rows"></tbody>
       </table>
-      <p id="empty" class="muted" hidden>没有匹配的记录</p>
+    </section>
+
+    <section data-panel="schema" hidden>
+      <h3>统一记录格式</h3>
+      <table>
+        <thead><tr><th>字段</th><th>必填</th><th>说明</th></tr></thead>
+        <tbody id="schema-rows"></tbody>
+      </table>
+      <p class="muted">类型：revenue（收入）、cost（成本）、monitor（监控）、review（用户评价）。</p>
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
