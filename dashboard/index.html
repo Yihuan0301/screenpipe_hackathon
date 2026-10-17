@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LaunchShadow 数据看板</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>LaunchShadow 数据看板</h1>
+    <label class="file-btn">
+      选择 JSON 文件
+      <input type="file" id="file" accept=".json,application/json">
+    </label>
+    <span id="source" class="muted">尚未加载数据</span>
+  </header>
+
+  <main>
+    <div id="drop" class="drop">或把 JSON 文件拖到这里</div>
+
+    <section class="stats" id="stats"></section>
+
+    <section>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="搜索用户或内容">
+        <select id="platform"><option value="">全部平台</option></select>
+        <select id="note"><option value="">全部笔记</option></select>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>平台</th><th>笔记</th><th>用户</th><th>层级</th>
+            <th>回复对象</th><th>作者回复</th><th>内容</th><th>首次出现</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="muted" hidden>没有匹配的记录</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
