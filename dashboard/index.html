@@ -3,80 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LaunchShadow 数据看板</title>
+  <title>LaunchShadow 运营看板</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>LaunchShadow 数据看板</h1>
-    <nav class="tabs">
-      <button data-tab="overview" class="active">概览</button>
-      <button data-tab="database">数据库</button>
-      <button data-tab="comments">评论</button>
-      <button data-tab="schema">格式说明</button>
-    </nav>
-    <label class="file-btn">
-      选择 JSON 文件
-      <input type="file" id="file" accept=".json,application/json">
-    </label>
-    <button id="demo-btn" class="ghost">加载 Demo 数据</button>
-    <span id="source" class="muted">尚未加载数据</span>
+  <header class="topbar">
+    <div class="brand">LaunchShadow<span>· 运营看板</span></div>
+    <div class="controls">
+      <select id="range" title="时间范围">
+        <option value="all">全部时间</option>
+        <option value="7">最近 7 天</option>
+        <option value="30">最近 30 天</option>
+      </select>
+      <label class="btn">选择 JSON<input type="file" id="file" accept=".json,application/json" hidden></label>
+      <button class="btn" id="demo-btn">加载 Demo</button>
+    </div>
+    <div class="status" id="status">尚未加载数据</div>
   </header>
 
   <main>
-    <div id="drop" class="drop">或把 JSON 文件拖到这里（数据只在本地浏览器处理）</div>
+    <div id="drop" class="drop">把 JSON 文件拖到这里（只在本地浏览器处理）</div>
 
-    <section data-panel="overview">
-      <div class="stats" id="kpis"></div>
-      <h3>按类型汇总</h3>
-      <table>
-        <thead><tr><th>类型</th><th>条数</th><th>金额合计（按币种，不换算）</th></tr></thead>
-        <tbody id="summary"></tbody>
-      </table>
-    </section>
+    <section id="overview" class="grid"></section>
 
-    <section data-panel="database" hidden>
-      <div class="toolbar">
-        <select id="db-kind"><option value="">全部类型</option></select>
-        <select id="db-source"><option value="">全部来源</option></select>
-        <input id="db-search" type="search" placeholder="搜索标题、详情、ref">
+    <section id="detail" class="detail" hidden>
+      <div class="detail-head">
+        <button class="btn" id="back">← 返回概览</button>
+        <h2 id="detail-title"></h2>
+        <input id="detail-search" type="search" placeholder="搜索标题、详情、ref">
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>kind</th><th>source</th><th>date</th><th>amount</th><th>currency</th>
-            <th>title</th><th>detail</th><th>ref</th><th>url</th>
+            <th>类型</th><th>来源</th><th>日期</th><th class="num">金额</th><th>币种</th>
+            <th>标题</th><th>详情</th><th>ref</th><th>链接</th>
           </tr></thead>
-          <tbody id="db-rows"></tbody>
+          <tbody id="detail-rows"></tbody>
         </table>
       </div>
-      <p id="db-count" class="muted"></p>
-    </section>
+      <p class="muted" id="detail-count"></p>
 
-    <section data-panel="comments" hidden>
-      <div class="toolbar">
-        <input id="search" type="search" placeholder="搜索用户或内容">
-        <select id="platform"><option value="">全部平台</option></select>
-        <select id="note"><option value="">全部笔记</option></select>
+      <div id="comments-block" hidden>
+        <h3>评论明细（小红书等抓取记录）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>平台</th><th>笔记</th><th>用户</th><th>层级</th><th>回复对象</th>
+              <th>作者回复</th><th>内容</th><th>首次出现</th>
+            </tr></thead>
+            <tbody id="comment-rows"></tbody>
+          </table>
+        </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>平台</th><th>笔记</th><th>用户</th><th>层级</th>
-            <th>回复对象</th><th>作者回复</th><th>内容</th><th>首次出现</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
     </section>
 
-    <section data-panel="schema" hidden>
-      <h3>统一记录格式</h3>
+    <section id="schema" class="detail" hidden>
+      <h2>统一记录格式</h2>
       <table>
         <thead><tr><th>字段</th><th>必填</th><th>说明</th></tr></thead>
         <tbody id="schema-rows"></tbody>
       </table>
-      <p class="muted">类型：revenue（收入）、cost（成本）、monitor（监控）、review（用户评价）。</p>
     </section>
   </main>
 
