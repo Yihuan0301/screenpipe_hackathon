@@ -1,6 +1,5 @@
 // 数据看板：纯前端。读取 JSON 或 Demo 数据，展示概览、数据库表和评论
 import { KINDS, FIELDS, validate } from './schema.js';
-import { DEMO_RECORDS } from './demo-data.js';
 
 const state = { records: [], comments: [] };
 const $ = (id) => document.getElementById(id);
@@ -147,28 +146,30 @@ document.querySelectorAll('.tabs button').forEach(btn => btn.addEventListener('c
   document.querySelectorAll('[data-panel]').forEach(s => { s.hidden = s.dataset.panel !== btn.dataset.tab; });
 }));
 
-$('file').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (file) load(parseRecords(await file.text()), file.name);
-});
-
-$('demo-btn').addEventListener('click', () => load(DEMO_RECORDS, 'Demo 数据（虚构）'));
-
-['dragenter', 'dragover'].forEach(ev => $('drop').addEventListener(ev, e => {
-  e.preventDefault();
-  $('drop').classList.add('hover');
-}));
-['dragleave', 'drop'].forEach(ev => $('drop').addEventListener(ev, e => {
-  e.preventDefault();
-  $('drop').classList.remove('hover');
-}));
-$('drop').addEventListener('drop', async (e) => {
-  const file = e.dataTransfer.files[0];
-  if (file) load(parseRecords(await file.text()), file.name);
-});
 
 ['db-kind', 'db-source'].forEach(id => $(id).addEventListener('input', renderDatabase));
 $('db-search').addEventListener('input', renderDatabase);
 ['search', 'platform', 'note'].forEach(id => $(id).addEventListener('input', renderComments));
 
 renderSchema();
+
+// ---- 自动读取 screenpipe 收集结果（不需要手动导入） ----
+// collect.js 把抓取结果写到 ../data/xiaohongshu-comments.json；页面每 30 秒重新读取。
+const DATA_URL = "../data/xiaohongshu-comments.json";
+const REFRESH_MS = 30_000;
+
+async function refresh() {
+  try {
+    const res = await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    const arr = Array.isArray(data) ? data : (data.records || []);
+    const updated = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString("zh-CN") : "未知";
+    load(arr, "screenpipe 数据（更新于 " + updated + "）");
+  } catch (err) {
+    $("source").textContent = "尚未有数据：" + err.message + "（先运行 collect.js）";
+  }
+}
+
+refresh();
+setInterval(refresh, REFRESH_MS);
