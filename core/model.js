@@ -2,7 +2,7 @@
 import fetch from 'node-fetch';
 import { BASE, API_HEADERS } from './screenpipe.js';
 
-export const MODEL = process.env.LAUNCHSHADOW_MODEL || 'claude-sonnet-5';
+export const MODEL = process.env.LAUNCHSHADOW_MODEL || 'claude-sonnet-4-5';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
