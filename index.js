@@ -59,6 +59,7 @@ async function getPlatformFrames(platform, { limit = 10, since = '10m ago', focu
         .map(r => ({
             frameId: r['content.frame_id'],
             noteId: noteIdFromUrl(r['content.browser_url']),
+            sourceUrl: r['content.browser_url'] || null,
             timestamp: r['content.timestamp'],
         }));
 }
@@ -119,9 +120,12 @@ async function collectNoteThread(platform, noteId, frames) {
     // 断层分隔符已在 items 中，linkReplies 会在断层处切断线程
     const records = linkReplies(items, platform.label);
     // 时间：按序列中的原始条目回填 firstSeen / lastSeen（来自 mergeFrameItems）
+    // 来源：这一组帧属于同一篇笔记（推文/视频），取第一帧的 URL 作为该笔记的地址
+    const sourceUrl = ordered.find(f => f.sourceUrl)?.sourceUrl ?? null;
     return records.map(r => ({
         ...r,
         noteId,
+        sourceUrl,
         frames: ordered.length,
         gapCount: gaps.length,
         firstSeen: r.firstSeen ?? null,
@@ -477,6 +481,8 @@ function toRecords(rows) {
         collapsedReplies: r.expandCount ?? null,  // 母评论显示的总回复数
         hiddenReplies: r.hiddenReplies ?? null,   // 线程内未展开、未抓到的回复数
         content: r.text,
+        noteId: r.noteId ?? null,      // 这条评论所属的笔记（推文/视频）id
+        sourceUrl: r.sourceUrl ?? null, // 这条评论所属的笔记 URL
         firstSeen: r.firstSeen ?? null,
         lastSeen: r.lastSeen ?? null,
         source: r.source,
