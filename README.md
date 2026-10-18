@@ -72,9 +72,15 @@ Open **http://localhost:3000**
 ### Demo flow
 
 1. **Opening slide** — the tab farm; click a tab or “four signals”  
-2. **FounderHUD** — empty templates → **Global Sync** → live data fills the cards  
-3. Expand each module (Revenue / Costs / Monitor / Feedback)  
-4. **Closing slide** — Before → Now → core tech (screenpipe + Playwright)
+2. **FounderHUD** — empty templates → fill cards → expand modules  
+3. **Closing slide** — Before → Now → core tech (screenpipe + Playwright)
+
+**3-minute live pitch:** Global Sync takes ~3 minutes end-to-end — don’t wait on stage.
+
+1. Backstage: run **Global Sync** once (or `npm run patrol:core`) so `data/patrol-cache.json` is warm  
+2. On stage: **Reset blank** → talk → hit **Fill HUD** (instant inject from last cache)  
+3. Optional: open one console in Chrome for 10s as proof, then Fill HUD  
+4. Judges who want the full crawl can press **Global Sync** after the pitch
 
 ---
 
@@ -92,43 +98,26 @@ Global Sync runs the full patrol (`npm run patrol:core` / UI button) across reve
 
 ## Data sources (patrol targets)
 
-Configured in `config/patrol-targets.js`.
+Configured in `config/patrol-targets.js`. **Personal console URLs live in `.env.local` only** (gitignored) — see `.env.local.example`.
 
-### Revenue
+| Module | Sources |
+|--------|---------|
+| Revenue | App Store Connect — Trends |
+| Costs | Gmail billing / receipts search |
+| Monitor | Cloudflare · Netlify · Fly.io · Supabase · DeepSeek · Tencent Cloud |
+| Feedback | App Store Connect — Ratings · Rednote notes |
 
-| Source | URL |
-|--------|-----|
-| App Store Connect — Trends | https://appstoreconnect.apple.com/trends/insights?pageid=8 |
-
-### Costs
-
-| Source | URL |
-|--------|-----|
-| Gmail — billing / receipts search | Built in `config/patrol-targets.js` (`GMAIL_BILLS`) |
-
-### Monitor
-
-| Source | URL |
-|--------|-----|
-| Cloudflare | https://dash.cloudflare.com/168fef0b1e7e1631140a33e1c880bf01/domains/overview |
-| Netlify | https://app.netlify.com/teams/zhangyihuan0301/billing/general#content |
-| Fly.io | https://fly.io/dashboard/yihuan-227/billing |
-| Supabase | https://supabase.com/dashboard/org/dqhfurerclflwieyeekj/usage?projectRef=vlyhuejpsebsduuhvniw |
-| DeepSeek | https://platform.deepseek.com/usage |
-| Tencent Cloud (Lighthouse instance) | https://console.cloud.tencent.com/lighthouse/instance/detail?searchParams=rid%3D1&rid=5&id=lhins-pgpizczn |
-
-Optional override:
+Set deep links in `.env.local`, for example:
 
 ```bash
-PATROL_TENCENT_URL=https://console.cloud.tencent.com/lighthouse/...
+PATROL_CLOUDFLARE_URL=...
+PATROL_NETLIFY_URL=...
+PATROL_FLY_URL=...
+PATROL_SUPABASE_URL=...
+PATROL_TENCENT_URL=...
+PATROL_ASC_RATINGS_URL=...
+PATROL_XHS_NOTE_URLS=url1,url2
 ```
-
-### Feedback
-
-| Source | URL |
-|--------|-----|
-| App Store Connect — Ratings | https://appstoreconnect.apple.com/apps/6795199051/distribution/ratings/ios |
-| Rednote notes | `PATROL_XHS_NOTE_URLS=url1,url2` in `.env.local` |
 
 ---
 

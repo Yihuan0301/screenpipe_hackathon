@@ -795,18 +795,39 @@ export default function Cockpit() {
               Founder<span className="text-cyan-400">HUD</span>
             </h1>
           </div>
-          {/* Global Sync — real Playwright patrol across all core tabs */}
-          <button
-            type="button"
-            disabled={patrolBusy}
-            onClick={() => void runModulePatrol("core")}
-            title="Global Sync — patrol all four modules (Revenue · Costs · Monitor · Feedback)"
-            className="mb-0.5 rounded-full border border-cyan-400/55 bg-zinc-950/90 px-4 py-1.5 text-sm font-medium text-cyan-300 shadow-[0_0_20px_-8px_rgba(34,211,238,0.5)] backdrop-blur transition hover:border-cyan-300/80 hover:bg-cyan-950/40 hover:text-cyan-200 disabled:cursor-wait disabled:opacity-60"
-          >
-            {patrolBusy && patrolTarget === "core"
-              ? "Global Syncing…"
-              : "Global Sync"}
-          </button>
+          <div className="mb-0.5 flex flex-wrap items-center gap-2">
+            {/* Pitch: inject last capture instantly (pre-run Global Sync backstage) */}
+            <button
+              type="button"
+              disabled={patrolBusy}
+              onClick={() => {
+                void applyPendingToHud("core").then((ok) => {
+                  setPatrolMsg(
+                    ok
+                      ? "Filled from last sync · live cache"
+                      : "No cache yet — run Global Sync once first"
+                  );
+                  window.setTimeout(() => setPatrolMsg(null), 5000);
+                });
+              }}
+              title="Pitch shortcut: fill all four cards from the last patrol cache (no re-crawl)"
+              className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-4 py-1.5 text-sm font-medium text-emerald-200 shadow-[0_0_20px_-8px_rgba(52,211,153,0.45)] backdrop-blur transition hover:border-emerald-300/70 hover:bg-emerald-400/20 disabled:cursor-wait disabled:opacity-60"
+            >
+              Fill HUD
+            </button>
+            {/* Global Sync — real Playwright patrol across all core tabs */}
+            <button
+              type="button"
+              disabled={patrolBusy}
+              onClick={() => void runModulePatrol("core")}
+              title="Global Sync — patrol all four modules (Revenue · Costs · Monitor · Feedback)"
+              className="rounded-full border border-cyan-400/55 bg-zinc-950/90 px-4 py-1.5 text-sm font-medium text-cyan-300 shadow-[0_0_20px_-8px_rgba(34,211,238,0.5)] backdrop-blur transition hover:border-cyan-300/80 hover:bg-cyan-950/40 hover:text-cyan-200 disabled:cursor-wait disabled:opacity-60"
+            >
+              {patrolBusy && patrolTarget === "core"
+                ? "Global Syncing…"
+                : "Global Sync"}
+            </button>
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {hydrated && (

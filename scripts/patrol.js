@@ -592,15 +592,20 @@ async function tryNavClicks(page, labels = []) {
 }
 
 function ascAppIdFrom(pageUrl) {
-  return (pageUrl.match(/\/apps\/(\d+)/) || [])[1] || "6795199051";
+  return (
+    (pageUrl.match(/\/apps\/(\d+)/) || [])[1] ||
+    (process.env.PATROL_ASC_APP_ID || "").trim() ||
+    ""
+  );
 }
 
 function ascRatingsUrlFrom(pageUrl) {
+  if (process.env.PATROL_ASC_RATINGS_URL) {
+    return process.env.PATROL_ASC_RATINGS_URL.trim();
+  }
   const appId = ascAppIdFrom(pageUrl);
-  return (
-    process.env.PATROL_ASC_RATINGS_URL ||
-    `https://appstoreconnect.apple.com/apps/${appId}/distribution/ratings/ios`
-  );
+  if (!appId) return "";
+  return `https://appstoreconnect.apple.com/apps/${appId}/distribution/ratings/ios`;
 }
 
 function isAscRatingsUrl(u) {
@@ -1488,13 +1493,27 @@ async function patrolModule(context, mod, cache) {
     await restoreCockpitTab(context, cockpitPages);
   }
 
-  cache.modules[mod.id] = {
-    id: mod.id,
-    label: mod.label,
-    hostHints: mod.hostHints || [],
-    snapshots,
-    updatedAt: new Date().toISOString(),
-  };
+  // Don't wipe a good cache with an empty failed run (browser closed mid-sync)
+  const prev = cache.modules?.[mod.id];
+  const prevSnaps = prev?.snapshots || [];
+  if (!snapshots.length && prevSnaps.length) {
+    console.warn(
+      `[patrol:${mod.id}] 0 new snapshots — keeping previous ${prevSnaps.length}`
+    );
+    cache.modules[mod.id] = {
+      ...prev,
+      updatedAt: new Date().toISOString(),
+      keptPrevious: true,
+    };
+  } else {
+    cache.modules[mod.id] = {
+      id: mod.id,
+      label: mod.label,
+      hostHints: mod.hostHints || [],
+      snapshots,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 
   console.log(
     `[patrol:${mod.id}] done — ${snapshots.length} usable snapshot(s)`
@@ -1771,7 +1790,12 @@ async function patrol() {
       await patrolModule(context, mod, cache);
       saveCache(cache);
       if (mod.id === "comments") {
-        refreshCommentsStructuredMd();
+        const n = cache.modules?.comments?.snapshots?.length || 0;
+        if (n > 0) refreshCommentsStructuredMd();
+        else
+          console.warn(
+            "[patrol] skip comments-structured.md refresh — no snapshots"
+          );
       }
     }
     writePatrolStatus({
