@@ -443,7 +443,7 @@ export default function CommentNebula({
           <p className="mt-0.5 text-[10px] text-zinc-500">
             Seen {hover.count}× ·{" "}
             {hover.platformBias < 0.35
-              ? "Skews Xiaohongshu"
+              ? "Skews Rednote"
               : hover.platformBias > 0.65
                 ? "Skews App Store"
                 : "Both channels"}

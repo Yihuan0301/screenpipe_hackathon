@@ -18,7 +18,7 @@ function escCell(s: string): string {
 export function commentsFeedToMarkdown(feed: CommentsViz): string {
   const rows = feed.comments.map((cm, i) => ({
     i: i + 1,
-    platform: cm.platform === "xiaohongshu" ? "XHS" : "ASC",
+    platform: cm.platform === "xiaohongshu" ? "Rednote" : "ASC",
     author: escCell((cm.author || "—").slice(0, 40)),
     rating: cm.rating ?? "—",
     body: escCell((cm.body || "").slice(0, 220)),
@@ -27,7 +27,7 @@ export function commentsFeedToMarkdown(feed: CommentsViz): string {
   return [
     "# Structured comments",
     "",
-    `Parsed rows: **${rows.length}** · XHS: ${feed.xhsCount} · ASC: ${feed.ascCount}`,
+    `Parsed rows: **${rows.length}** · Rednote: ${feed.xhsCount} · ASC: ${feed.ascCount}`,
     "",
     "Source: `data/patrol-cache.json` → `parseCommentsFeed` (UI chrome / usernames / creator replies filtered)",
     "",

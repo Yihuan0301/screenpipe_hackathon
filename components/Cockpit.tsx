@@ -75,7 +75,7 @@ const MODULE_META: Omit<CockpitModule, "preview" | "details">[] = [
   },
   {
     id: "comments",
-    label: "Reviews",
+    label: "Feedback",
     icon: MessageSquare,
     accent: "text-amber-400",
     glow: "shadow-[0_0_48px_-6px_rgba(251,191,36,0.5)]",
@@ -83,45 +83,56 @@ const MODULE_META: Omit<CockpitModule, "preview" | "details">[] = [
   },
 ];
 
-const FALLBACK: LiveModules = {
+/** UI labels — module Sync ≠ Global Sync */
+const SYNC_LABEL: Record<ModuleId | "core", string> = {
+  revenue: "Revenue",
+  costs: "Costs",
+  status: "Monitor",
+  comments: "Feedback",
+  core: "Global",
+};
+
+/** Empty shell for pitch demo — fill on one click */
+const BLANK: LiveModules = {
   revenue: {
-    preview: "No proceeds yet",
+    preview: "—",
     details: [
-      { label: "Source", value: "App Store Connect Trends" },
-      { label: "Focus", value: "Sales · Units · IAP" },
-      { label: "Decide", value: "Paywall & subscription conversion" },
-      { label: "Refresh", value: "Auto every 20s" },
+      { label: "Sales", value: "—" },
+      { label: "Units", value: "—" },
+      { label: "Source", value: "App Store Connect" },
+      { label: "Status", value: "Empty" },
     ],
+    teaser: "Empty template · waiting for fill",
   },
   costs: {
-    preview: "Loading…",
+    preview: "—",
     details: [
-      { label: "Ledger", value: "Fixed-cost ledger" },
-      { label: "Source", value: "Inbox receipts · consoles" },
-      { label: "Focus", value: "Dev tools · platform fees" },
-      { label: "Refresh", value: "Every 20s" },
+      { label: "Total", value: "—" },
+      { label: "Vendors", value: "—" },
+      { label: "Source", value: "Gmail · consoles" },
+      { label: "Status", value: "Empty" },
     ],
+    teaser: "Empty template · waiting for fill",
   },
   status: {
     preview: "—",
     details: [
-      {
-        label: "Monitor",
-        value: "CF · Netlify · Fly · Supabase · DeepSeek · Tencent Cloud",
-      },
-      { label: "Focus", value: "Uptime · quotas · billing" },
-      { label: "Decide", value: "Scale-up & top-up timing" },
-      { label: "Refresh", value: "Every 20s" },
+      { label: "Platforms", value: "—" },
+      { label: "Quotas", value: "—" },
+      { label: "Health", value: "—" },
+      { label: "Status", value: "Empty" },
     ],
+    teaser: "Empty template · waiting for fill",
   },
   comments: {
     preview: "—",
     details: [
-      { label: "Xiaohongshu", value: "Note comments / word of mouth" },
-      { label: "App Store", value: "Ratings & Reviews" },
-      { label: "Focus", value: "Pain themes · sentiment" },
-      { label: "Decide", value: "Iteration priority & ASO copy" },
+      { label: "Rednote", value: "—" },
+      { label: "App Store", value: "—" },
+      { label: "Latest", value: "—" },
+      { label: "Status", value: "Empty" },
     ],
+    teaser: "Empty template · waiting for fill",
   },
 };
 
@@ -451,13 +462,33 @@ export default function Cockpit() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [isCollapsing, setIsCollapsing] = useState(false);
-  const [live, setLive] = useState<LiveModules>(FALLBACK);
+  const [live, setLive] = useState<LiveModules>(BLANK);
+  /** Pitch demo: cards stay empty until one-click fill */
+  const [hydrated, setHydrated] = useState(false);
+  const [fillFlash, setFillFlash] = useState(false);
   const [pipeOk, setPipeOk] = useState<boolean | null>(null);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [patrolBusy, setPatrolBusy] = useState(false);
+  /** Active Sync target — `core` = all modules; else only that card */
+  const [patrolTarget, setPatrolTarget] = useState<ModuleId | "core" | null>(
+    null
+  );
   const [patrolMsg, setPatrolMsg] = useState<string | null>(null);
   const collapseTimerRef = useRef<number | null>(null);
   const pullRef = useRef<() => Promise<void>>(async () => {});
+  const pendingLiveRef = useRef<LiveModules | null>(null);
+  const hydratedRef = useRef(false);
+  const patrolTargetRef = useRef<ModuleId | "core" | null>(null);
+  /** Modules the user has synced — idle pull only refreshes these */
+  const filledModulesRef = useRef<Set<ModuleId>>(new Set());
+
+  useEffect(() => {
+    hydratedRef.current = hydrated;
+  }, [hydrated]);
+
+  useEffect(() => {
+    patrolTargetRef.current = patrolTarget;
+  }, [patrolTarget]);
 
   useEffect(() => {
     return () => {
@@ -478,7 +509,7 @@ export default function Cockpit() {
 
         setPipeOk(Boolean(data.screenpipeHealthy));
         setFetchedAt(data.fetchedAt ?? null);
-        setLive({
+        const next: LiveModules = {
           revenue: {
             preview: usdMoneyToEurDisplay(data.modules.revenue.preview),
             details: (data.modules.revenue.details || []).map(
@@ -521,7 +552,24 @@ export default function Cockpit() {
             briefing: data.modules.comments.briefing,
             teaser: data.modules.comments.teaser,
           },
-        });
+        };
+        pendingLiveRef.current = next;
+        // Pitch: stay blank until Sync. Module Sync ≠ fill other cards.
+        if (hydratedRef.current) {
+          const scope = patrolTargetRef.current;
+          if (scope && scope !== "core") {
+            setLive((prev) => ({ ...prev, [scope]: next[scope] }));
+          } else if (scope === "core") {
+            setLive(next);
+          } else {
+            const filled = filledModulesRef.current;
+            setLive((prev) => {
+              const out = { ...prev };
+              for (const id of filled) out[id] = next[id];
+              return out;
+            });
+          }
+        }
       } catch {
         if (!cancelled) setPipeOk(false);
       }
@@ -536,10 +584,42 @@ export default function Cockpit() {
     };
   }, []);
 
-  async function runModulePatrol(moduleId: ModuleId) {
+  /** Inject cache into HUD. `core` → all four; else only that module. */
+  async function applyPendingToHud(scope: ModuleId | "core" = "core") {
+    await pullRef.current();
+    const next = pendingLiveRef.current;
+    if (!next) return false;
+    setFillFlash(true);
+    if (scope === "core") {
+      filledModulesRef.current = new Set([
+        "revenue",
+        "costs",
+        "status",
+        "comments",
+      ]);
+      setLive(next);
+    } else {
+      filledModulesRef.current.add(scope);
+      setLive((prev) => ({ ...prev, [scope]: next[scope] }));
+    }
+    setHydrated(true);
+    window.setTimeout(() => setFillFlash(false), 900);
+    return true;
+  }
+
+  /** Module Sync = one tab; Global Sync (`core`) = all four. */
+  async function runModulePatrol(moduleId: ModuleId | "core") {
     if (patrolBusy) return;
     setPatrolBusy(true);
-    setPatrolMsg("Starting Sync…");
+    setPatrolTarget(moduleId);
+    patrolTargetRef.current = moduleId;
+    const isGlobal = moduleId === "core";
+    const label = SYNC_LABEL[moduleId];
+    setPatrolMsg(
+      isGlobal
+        ? "Global Sync · opening all platforms…"
+        : `${label} Sync · this module only…`
+    );
     try {
       const res = await fetch("/api/patrol", {
         method: "POST",
@@ -552,6 +632,8 @@ export default function Cockpit() {
           data?.error || "Sync failed — try again in a moment"
         );
         setPatrolBusy(false);
+        setPatrolTarget(null);
+        patrolTargetRef.current = null;
         window.setTimeout(() => setPatrolMsg(null), 12000);
         return;
       }
@@ -561,6 +643,7 @@ export default function Cockpit() {
           "Sync started — Chrome opens if needed; sign in there if prompted."
       );
 
+      const maxTicks = isGlobal ? 180 : 90; // global visits many consoles
       let ticks = 0;
       const poll = window.setInterval(() => {
         ticks += 1;
@@ -578,29 +661,66 @@ export default function Cockpit() {
                 window.clearInterval(poll);
                 setPatrolBusy(false);
                 if (s.status.phase === "done") {
-                  void pullRef.current();
+                  // Keep scope until HUD inject finishes (module Sync ≠ fill all)
+                  void applyPendingToHud(moduleId)
+                    .then((ok) => {
+                      setPatrolMsg(
+                        ok
+                          ? isGlobal
+                            ? "Global Sync complete · all four modules updated"
+                            : `${label} Sync complete · only this module updated`
+                          : "Sync done · refresh if cards still empty"
+                      );
+                    })
+                    .finally(() => {
+                      setPatrolTarget(null);
+                      patrolTargetRef.current = null;
+                    });
+                } else {
+                  setPatrolTarget(null);
+                  patrolTargetRef.current = null;
+                  setPatrolMsg(msg || "Sync error");
                 }
                 window.setTimeout(() => setPatrolMsg(null), 8000);
-              } else if (!s?.busy && ticks >= 4 && s?.status?.phase !== "waiting_login") {
-                // process ended without writing done — stop busy
+              } else if (
+                !s?.busy &&
+                ticks >= 4 &&
+                s?.status?.phase !== "waiting_login"
+              ) {
                 window.clearInterval(poll);
                 setPatrolBusy(false);
-                void pullRef.current();
-                setPatrolMsg(msg || "Sync finished");
+                void applyPendingToHud(moduleId)
+                  .then((ok) => {
+                    setPatrolMsg(
+                      ok
+                        ? isGlobal
+                          ? msg || "Global Sync finished"
+                          : msg || `${label} Sync finished`
+                        : msg || "Sync finished"
+                    );
+                  })
+                  .finally(() => {
+                    setPatrolTarget(null);
+                    patrolTargetRef.current = null;
+                  });
                 window.setTimeout(() => setPatrolMsg(null), 6000);
               }
             }
           )
           .catch(() => {});
-        if (ticks >= 90) {
+        if (ticks >= maxTicks) {
           window.clearInterval(poll);
           setPatrolBusy(false);
+          setPatrolTarget(null);
+          patrolTargetRef.current = null;
           setPatrolMsg("Sync timed out — check the Chrome window");
           window.setTimeout(() => setPatrolMsg(null), 8000);
         }
       }, 2000);
     } catch (err) {
       setPatrolBusy(false);
+      setPatrolTarget(null);
+      patrolTargetRef.current = null;
       setPatrolMsg(
         err instanceof Error ? err.message : "Sync request failed"
       );
@@ -665,35 +785,82 @@ export default function Cockpit() {
         <div className="absolute bottom-0 right-1/4 h-[280px] w-[400px] rounded-full bg-rose-500/5 blur-[100px]" />
       </div>
 
-      <header className="relative z-50 flex items-center justify-between px-6 py-5 sm:px-10">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-400/80">
-            Screen is the Universal API
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            Founder<span className="text-cyan-400">HUD</span>
-          </h1>
+      <header className="relative z-50 flex items-center justify-between gap-3 px-6 py-5 sm:px-10">
+        <div className="flex min-w-0 flex-wrap items-end gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-400/80">
+              Screen is the Universal API
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Founder<span className="text-cyan-400">HUD</span>
+            </h1>
+          </div>
+          {/* Global Sync — real Playwright patrol across all core tabs */}
+          <button
+            type="button"
+            disabled={patrolBusy}
+            onClick={() => void runModulePatrol("core")}
+            title="Global Sync — patrol all four modules (Revenue · Costs · Monitor · Feedback)"
+            className="mb-0.5 rounded-full border border-cyan-400/55 bg-zinc-950/90 px-4 py-1.5 text-sm font-medium text-cyan-300 shadow-[0_0_20px_-8px_rgba(34,211,238,0.5)] backdrop-blur transition hover:border-cyan-300/80 hover:bg-cyan-950/40 hover:text-cyan-200 disabled:cursor-wait disabled:opacity-60"
+          >
+            {patrolBusy && patrolTarget === "core"
+              ? "Global Syncing…"
+              : "Global Sync"}
+          </button>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-400 backdrop-blur">
-          <span className="relative flex h-2 w-2">
-            <span
-              className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${
-                pipeOk ? "bg-emerald-400" : "bg-amber-400"
-              }`}
-            />
-            <span
-              className={`relative inline-flex h-2 w-2 rounded-full ${
-                pipeOk ? "bg-emerald-400" : "bg-amber-400"
-              }`}
-            />
-          </span>
-          {pipeOk === null
-            ? "Syncing…"
-            : pipeOk
-              ? "Screenpipe Live"
-              : "Screenpipe Offline"}
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {hydrated && (
+            <button
+              type="button"
+              onClick={() => {
+                setHydrated(false);
+                filledModulesRef.current = new Set();
+                setLive(BLANK);
+                setIsExpanded(false);
+                setExpandedIndex(null);
+                setPatrolMsg("Back to empty template");
+                window.setTimeout(() => setPatrolMsg(null), 3000);
+              }}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] text-zinc-500 backdrop-blur transition hover:border-white/20 hover:text-zinc-300"
+              title="Reset to blank cards for the next demo"
+            >
+              Reset blank
+            </button>
+          )}
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-zinc-400 backdrop-blur">
+            <span className="relative flex h-2 w-2">
+              <span
+                className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${
+                  pipeOk ? "bg-emerald-400" : "bg-amber-400"
+                }`}
+              />
+              <span
+                className={`relative inline-flex h-2 w-2 rounded-full ${
+                  pipeOk ? "bg-emerald-400" : "bg-amber-400"
+                }`}
+              />
+            </span>
+            {pipeOk === null
+              ? "Connecting…"
+              : pipeOk
+                ? "Screenpipe Live"
+                : "Screenpipe Offline"}
+          </div>
         </div>
       </header>
+
+      <AnimatePresence>
+        {patrolMsg && !isExpanded && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="relative z-50 px-6 text-center text-[11px] text-cyan-300/90 sm:px-10"
+          >
+            {patrolMsg}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Stage：双层叠放，展开时交叉淡入 + 卡片 layoutId 变形 */}
       <div className="relative z-10 min-h-0 flex-1 px-6 pb-6 pt-2 sm:px-10">
@@ -707,7 +874,7 @@ export default function Cockpit() {
           initial={false}
           animate={{
             opacity: isExpanded ? 0 : 1,
-            scale: isExpanded ? 0.97 : 1,
+            scale: isExpanded ? 0.97 : fillFlash ? 1.02 : 1,
           }}
           transition={isExpanded ? FADE : CAROUSEL_REVEAL}
         >
@@ -830,9 +997,13 @@ export default function Cockpit() {
                         void runModulePatrol(expandedModule.id);
                       }}
                       className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-1.5 text-sm text-cyan-200 transition-colors hover:bg-cyan-400/20 disabled:cursor-wait disabled:opacity-50"
-                      title="Re-fetch latest data for this module from consoles"
+                      title={`Sync ${expandedModule.label} only — not Global Sync`}
                     >
-                      {patrolBusy ? "Syncing…" : "Sync"}
+                      {patrolBusy && patrolTarget === expandedModule.id
+                        ? `Syncing ${expandedModule.label}…`
+                        : patrolBusy
+                          ? "Busy…"
+                          : "Sync"}
                     </button>
                     {patrolMsg && (
                       <p className="max-w-[240px] truncate text-right text-[10px] text-zinc-500">

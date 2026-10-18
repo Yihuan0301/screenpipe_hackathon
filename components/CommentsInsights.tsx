@@ -192,7 +192,7 @@ export default function CommentsInsights({ viz }: { viz: CommentsViz }) {
         className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1"
       >
         <p className="min-w-0 text-[13px] leading-none text-zinc-400">
-          <span>Xiaohongshu · App Store</span>
+          <span>Rednote · App Store</span>
           {viz.scannedAt ? (
             <span className="text-zinc-600">
               {" "}

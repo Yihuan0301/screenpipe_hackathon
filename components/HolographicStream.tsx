@@ -259,7 +259,7 @@ export default function HolographicStream({
                         </span>
                       </span>
                       <span className="ml-auto text-[9px] uppercase tracking-wider text-zinc-600">
-                        {item.platform === "xiaohongshu" ? "XHS" : "ASC"} ·{" "}
+                        {item.platform === "xiaohongshu" ? "Rednote" : "ASC"} ·{" "}
                         {item.author}
                       </span>
                     </header>

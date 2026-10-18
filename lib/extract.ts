@@ -754,10 +754,10 @@ export function extractComments(
       details: [
         {
           label: "Status",
-          value: "No Xiaohongshu or App Store reviews ingested yet",
+          value: "No Rednote or App Store reviews ingested yet",
         },
         {
-          label: "Xiaohongshu",
+          label: "Rednote",
           value: "Sync note comments to show up here",
         },
         {
@@ -767,7 +767,7 @@ export function extractComments(
         { label: "Next", value: "Pull both channels, then run theme clustering" },
       ],
       confidence: "none",
-      teaser: "Waiting on Xiaohongshu · App Store review sync",
+      teaser: "Waiting on Rednote · App Store review sync",
     };
   }
 
@@ -775,18 +775,18 @@ export function extractComments(
     top?.platform === "appstore"
       ? "App Store"
       : top?.platform === "xiaohongshu"
-        ? "Xiaohongshu"
+        ? "Rednote"
         : "mixed";
 
   // Cockpit is English-facing — don't dump raw CJK XHS nicknames into the card
   const authorLabel = displayReviewAuthor(top?.author, top?.platform);
 
   const briefing: ModuleBriefing = {
-    summary: `${viz.total} reviews in the pool (Xiaohongshu ${viz.xhsCount} · App Store ${viz.ascCount} across ${viz.sources.length} sources). Latest signal from ${channel}${authorLabel !== "—" ? ` · ${authorLabel}` : ""} — see theme clusters for the English read-out.`,
+    summary: `${viz.total} reviews in the pool (Rednote ${viz.xhsCount} · App Store ${viz.ascCount} across ${viz.sources.length} sources). Latest signal from ${channel}${authorLabel !== "—" ? ` · ${authorLabel}` : ""} — see theme clusters for the English read-out.`,
     suggestions: [
       viz.xhsCount === 0
-        ? "No Xiaohongshu comments yet — sync before you can compare community buzz with store ratings."
-        : "Turn high-engagement XHS threads and recurring questions into FAQ and next-release copy.",
+        ? "No Rednote comments yet — sync before you can compare community buzz with store ratings."
+        : "Turn high-engagement Rednote threads and recurring questions into FAQ and next-release copy.",
       viz.ascCount === 0
         ? "App Store reviews aren't in yet — when they land, triage low stars first and harvest five-star lines for ASO."
         : "Template replies for ASC low scores; pull five-star quotes into screenshots and keywords.",
@@ -799,7 +799,7 @@ export function extractComments(
     id: "comments",
     preview: `${viz.total} reviews`,
     details: [
-      { label: "Xiaohongshu", value: `${viz.xhsCount}` },
+      { label: "Rednote", value: `${viz.xhsCount}` },
       { label: "App Store", value: `${viz.ascCount}` },
       {
         label: "Latest channel",
@@ -815,7 +815,7 @@ export function extractComments(
     updatedAt: viz.scannedAt || items[0]?.ts,
     viz,
     briefing,
-    teaser: `XHS ${viz.xhsCount} · ASC ${viz.ascCount}${
+    teaser: `Rednote ${viz.xhsCount} · ASC ${viz.ascCount}${
       authorLabel !== "—" ? ` · ${authorLabel}` : ""
     }`,
   };
@@ -829,7 +829,7 @@ function displayReviewAuthor(
   const raw = (author || "").trim();
   if (!raw) return "—";
   if (/[\u4e00-\u9fff]/.test(raw)) {
-    return platform === "appstore" ? "ASC reviewer" : "XHS reviewer";
+    return platform === "appstore" ? "ASC reviewer" : "Rednote reviewer";
   }
   return raw.slice(0, 28);
 }

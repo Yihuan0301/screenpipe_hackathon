@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   PITCH_OPEN,
   PITCH_PLATFORMS,
+  PITCH_SIGNALS,
   platformLogoUrl,
   type PitchPlatform,
 } from "@/lib/pitch-content";
@@ -225,6 +226,91 @@ function PlatformPreview({
   );
 }
 
+function SignalsPreview({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      className="absolute inset-0 z-40 flex items-center justify-center p-4 sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 bg-zinc-950/80 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pitch-signals-title"
+        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ type: "spring", stiffness: 320, damping: 26 }}
+        className="relative z-10 w-full max-w-sm overflow-hidden rounded-2xl border border-amber-400/25 bg-zinc-950 px-5 py-5 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.9),0_0_40px_-12px_rgba(251,191,36,0.35)]"
+      >
+        <p className="text-[10px] uppercase tracking-[0.22em] text-amber-200/80">
+          Nine tabs collapse to
+        </p>
+        <p
+          id="pitch-signals-title"
+          className="mt-2 font-[family-name:var(--font-pitch-display)] text-lg text-zinc-50"
+        >
+          {PITCH_OPEN.signalsTitle}
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          {PITCH_SIGNALS.map((s, i) => (
+            <motion.div
+              key={s.key}
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{
+                delay: 0.1 + i * 0.07,
+                type: "spring",
+                stiffness: 380,
+                damping: 22,
+              }}
+              className="rounded-xl border border-white/12 bg-zinc-900/90 px-3 py-3"
+            >
+              <p className="font-[family-name:var(--font-pitch-display)] text-base text-amber-100">
+                {s.label}
+              </p>
+              <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                {s.hint}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+        <p className="mt-4 text-center text-[11px] text-zinc-500">
+          {PITCH_OPEN.signalsSub}
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            document
+              .getElementById("pitch-hub")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className="mt-3 w-full rounded-lg border border-amber-400/35 bg-amber-400/10 py-2.5 text-[11px] font-medium uppercase tracking-[0.18em] text-amber-100 transition hover:border-amber-400/55 hover:bg-amber-400/15"
+        >
+          Go FounderHUD
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function TabFarm({
   platforms,
   compact = false,
@@ -233,6 +319,7 @@ function TabFarm({
   compact?: boolean;
 }) {
   const [active, setActive] = useState<PitchPlatform | null>(null);
+  const [showSignals, setShowSignals] = useState(false);
 
   return (
     <div className="relative h-full w-full">
@@ -240,7 +327,7 @@ function TabFarm({
         <p className="pointer-events-none absolute left-5 top-4 z-30 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
           Browser tabs · everyday mess
           <span className="mt-1 block tracking-[0.18em] text-zinc-600 normal-case">
-            Click a tab → see what we pull
+            Click a tab · or the button below
           </span>
         </p>
       )}
@@ -272,7 +359,10 @@ function TabFarm({
             }
             whileHover={{ scale: 1.03, zIndex: 20 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setActive(p)}
+            onClick={() => {
+              setShowSignals(false);
+              setActive(p);
+            }}
             className={`group absolute cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${
               compact ? "w-[78%]" : ""
             }`}
@@ -297,12 +387,35 @@ function TabFarm({
         );
       })}
 
+      {/* Pitch bridge: nine tabs → four signals */}
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.4 }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => {
+          setActive(null);
+          setShowSignals(true);
+        }}
+        className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-amber-400/40 bg-zinc-950/90 px-4 py-2 text-[11px] font-medium tracking-wide text-amber-100 shadow-[0_0_28px_-6px_rgba(251,191,36,0.55)] backdrop-blur-sm outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+      >
+        <span className="text-amber-300/90">{PITCH_OPEN.signalsCta}</span>
+        <span aria-hidden className="text-amber-400/80">
+          →
+        </span>
+      </motion.button>
+
       <AnimatePresence>
         {active && (
           <PlatformPreview
             platform={active}
             onClose={() => setActive(null)}
           />
+        )}
+        {showSignals && (
+          <SignalsPreview onClose={() => setShowSignals(false)} />
         )}
       </AnimatePresence>
     </div>

@@ -306,31 +306,97 @@ function parseFly(item: Item): PlatformCard {
 
 function parseTencent(item: Item): PlatformCard {
   const text = item.text || "";
-  const balance =
-    text.match(/(?:账户余额|可用余额|Balance)[^\d¥￥]*([¥￥]?\s*[0-9,.]+)/i)?.[1] ||
-    text.match(/¥\s*([0-9,.]+)/)?.[1];
-  const ok =
-    /正常|运行中|Healthy|Normal|Running|Available/i.test(text) &&
-    !/欠费|停服|Suspended|Overdue/i.test(text);
-  const warn = /欠费|告警|即将到期|Overdue|Alarm/i.test(text);
+
+  // 轻量实例详情 · 用量与监控
+  // 流量包 385.2 MB / 512 GB · 系统盘 5.0 GB / 40 GB · CPU 1.224% · 内存 315 MB
+  const trafficPkg =
+    text.match(
+      /流量包[\s\S]{0,80}?(\d+(?:\.\d+)?\s*[KMGT]?B)\s*\/\s*(\d+(?:\.\d+)?\s*[KMGT]?B)/i
+    ) ||
+    text.match(
+      /(\d+(?:\.\d+)?\s*[KMGT]?B)\s*\/\s*(\d+(?:\.\d+)?\s*[KMGT]?B)[\s\S]{0,40}?流量/i
+    );
+  const trafficUsed = trafficPkg?.[1];
+  const trafficQuota = trafficPkg?.[2];
+  const trafficPct = text.match(/流量包[\s\S]{0,120}?(\d+(?:\.\d+)?)\s*%/i)?.[1];
+
+  const disk =
+    text.match(
+      /系统盘[\s\S]{0,80}?(\d+(?:\.\d+)?\s*GB)\s*\/\s*(\d+(?:\.\d+)?\s*GB)/i
+    ) ||
+    text.match(/(\d+(?:\.\d+)?\s*GB)\s*\/\s*(\d+(?:\.\d+)?\s*GB)[\s\S]{0,20}?12/i);
+  const diskUsed = disk?.[1];
+  const diskTotal = disk?.[2];
+  const diskPct = text.match(/系统盘[\s\S]{0,120}?(\d+(?:\.\d+)?)\s*%/i)?.[1];
+
+  const cpuPct =
+    text.match(/CPU\s*[|｜]?\s*\d+\s*核[\s\S]{0,40}?(\d+(?:\.\d+)?)\s*%/i)?.[1] ||
+    text.match(/CPU[\s\S]{0,30}?(\d+(?:\.\d+)?)\s*%/i)?.[1];
+
+  const memUsed =
+    text.match(/内存\s*[|｜]?\s*\d+\s*GB[\s\S]{0,40}?(\d+(?:\.\d+)?\s*MB)/i)?.[1] ||
+    text.match(/内存[\s\S]{0,40}?(\d+(?:\.\d+)?\s*MB)/i)?.[1];
+
+  // legacy overview cards (if any)
+  const cpuLoad = text.match(/CPU\s*负载比[\s\S]{0,40}?(\d+(?:\.\d+)?)/i)?.[1];
+  const memPctLegacy =
+    text.match(/内存[\s\S]{0,30}?(\d+(?:\.\d+)?)\s*%/i)?.[1];
+
+  const cpuShow = cpuPct || cpuLoad;
+  const memShow = memUsed || (memPctLegacy ? `${memPctLegacy}%` : undefined);
+  const trafficShow = trafficUsed
+    ? trafficQuota
+      ? `${trafficUsed} / ${trafficQuota}`
+      : trafficUsed
+    : undefined;
+  const diskShow =
+    diskUsed && diskTotal
+      ? `${diskUsed} / ${diskTotal}${diskPct ? ` (${diskPct}%)` : ""}`
+      : undefined;
+
+  const cpuN = cpuShow ? parseFloat(String(cpuShow).replace(/[^\d.]/g, "")) : NaN;
+  const hot =
+    (Number.isFinite(cpuN) && cpuPct && cpuN >= 85) ||
+    (Number.isFinite(cpuN) && cpuLoad && cpuN >= 0.7);
+
+  const hasMonitor = Boolean(
+    trafficShow || diskShow || cpuShow || memShow
+  );
+  const health: PlatformHealth = hot ? "warn" : "ok";
+
+  const headline = hasMonitor
+    ? [
+        cpuPct ? `CPU ${cpuPct}%` : cpuLoad ? `CPU ${cpuLoad}` : null,
+        memShow ? `Mem ${memShow}` : null,
+        trafficUsed || null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "Console scanned";
 
   return {
     id: "tencent",
     name: "Tencent Cloud",
-    health: warn ? "warn" : ok ? "ok" : "ok",
-    headline: balance
-      ? `Balance ${cnyStrToEur(balance)}`
-      : ok
-        ? "Console scanned"
-        : "Scanned",
-    plan: "Cloud",
+    health,
+    headline,
+    plan: "Lighthouse",
     metrics: [
-      { label: "Balance", value: balance ? cnyStrToEur(balance) : "—" },
+      {
+        label: "Traffic",
+        value: trafficShow
+          ? `${trafficShow}${trafficPct ? ` · ${trafficPct}%` : ""}`
+          : "—",
+      },
+      { label: "Disk", value: diskShow || "—" },
+      {
+        label: "CPU",
+        value: cpuPct ? `${cpuPct}%` : cpuLoad || "—",
+      },
+      { label: "Memory", value: memShow || "—" },
       {
         label: "Signal",
-        value: warn ? "Watch" : ok ? "Normal" : "Captured",
+        value: hot ? "Hot" : hasMonitor ? "Normal" : "Captured",
       },
-      { label: "Source", value: "console.cloud.tencent.com" },
     ],
     capturedAt: item.ts,
     url: item.url,
@@ -374,9 +440,11 @@ const WAITING_METRICS: Record<PlatformId, StatusMetric[]> = {
     { label: "flash req", value: "—" },
   ],
   tencent: [
-    { label: "Balance", value: "—" },
+    { label: "Traffic", value: "—" },
+    { label: "Disk", value: "—" },
+    { label: "CPU", value: "—" },
+    { label: "Memory", value: "—" },
     { label: "Signal", value: "—" },
-    { label: "Source", value: "console.cloud.tencent.com" },
   ],
 };
 
@@ -396,12 +464,14 @@ function demoTencentCard(): PlatformCard {
     id: "tencent",
     name: "Tencent Cloud",
     health: "ok",
-    headline: "Expense overview · Normal",
-    plan: "Pay-as-you-go",
+    headline: "CPU 1.2% · Mem 315 MB · 385.2 MB",
+    plan: "Lighthouse",
     metrics: [
-      { label: "Balance", value: "€16.26" },
+      { label: "Traffic", value: "385.2 MB / 512 GB · 0.07%" },
+      { label: "Disk", value: "5.0 GB / 40 GB (12.6%)" },
+      { label: "CPU", value: "1.224%" },
+      { label: "Memory", value: "315 MB" },
       { label: "Signal", value: "Normal" },
-      { label: "Source", value: "console.cloud.tencent.com" },
     ],
     capturedAt: new Date().toISOString(),
   };
@@ -428,12 +498,29 @@ const NAMES: Record<PlatformId, string> = {
 export function parseStatusPlatforms(items: Item[]): StatusViz {
   const byId = new Map<PlatformId, PlatformCard>();
 
+  const richness = (c: PlatformCard) =>
+    c.metrics.filter((m) => m.value && m.value !== "—").length;
+
   for (const item of items) {
     const id = detectPlatform(item);
     if (!id) continue;
     const card = PARSERS[id](item);
     const prev = byId.get(id);
-    if (!prev || (item.ts && prev.capturedAt && item.ts >= prev.capturedAt)) {
+    if (!prev) {
+      byId.set(id, card);
+      continue;
+    }
+    // Prefer the snapshot that actually parsed monitor fields (e.g. Lighthouse detail)
+    if (richness(card) > richness(prev)) {
+      byId.set(id, card);
+      continue;
+    }
+    if (
+      richness(card) === richness(prev) &&
+      item.ts &&
+      prev.capturedAt &&
+      item.ts >= prev.capturedAt
+    ) {
       byId.set(id, card);
     } else if (!prev.capturedAt && item.ts) {
       byId.set(id, card);

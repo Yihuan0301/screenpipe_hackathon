@@ -93,7 +93,7 @@ export function heuristicSentiment(input: {
 
 export function buildSentimentPrompt(texts: string[]): string {
   const sample = texts.slice(0, 24).map((t, i) => `${i + 1}. ${t.slice(0, 220)}`).join("\n");
-  return `你是产品评论情绪分析器。阅读下列用户评论（小红书 + App Store），给出 0-100 的整体情绪分。
+  return `你是产品评论情绪分析器。阅读下列用户评论（Rednote + App Store），给出 0-100 的整体情绪分。
 规则：
 - 80-100：明显好评主导（推荐、爱用、效果好）
 - 60-79：偏正面但有杂音

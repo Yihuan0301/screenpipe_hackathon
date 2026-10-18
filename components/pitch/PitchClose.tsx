@@ -8,7 +8,7 @@ import {
 } from "@/lib/pitch-content";
 import ScreenpipeBadge from "./ScreenpipeBadge";
 
-const HUB_MODULES = ["Revenue", "Costs", "Monitor", "Reviews"] as const;
+const HUB_MODULES = ["Revenue", "Costs", "Monitor", "Feedback"] as const;
 
 const PITCH_GRADIENT = {
   backgroundImage:

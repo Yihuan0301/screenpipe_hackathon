@@ -605,7 +605,7 @@ export function buildNebulaPrompt(comments: FeedComment[]): string {
     .slice(0, 120);
   const listed = reviews
     .map((c, i) => {
-      const ch = c.platform === "appstore" ? "ASC" : "XHS";
+      const ch = c.platform === "appstore" ? "ASC" : "Rednote";
       return `${i + 1}. [${ch}] ${(c.body || "").replace(/\s+/g, " ").trim().slice(0, 280)}`;
     })
     .join("\n");

@@ -144,6 +144,30 @@ export function platformLogoUrl(
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
 }
 
+/** The four things every morning tab-hop is really for — pitch slam */
+export const PITCH_SIGNALS = [
+  {
+    key: "revenue",
+    label: "Revenue",
+    hint: "Store proceeds · units",
+  },
+  {
+    key: "costs",
+    label: "Costs",
+    hint: "Invoices · AI spend",
+  },
+  {
+    key: "monitor",
+    label: "Monitor",
+    hint: "Quotas · uptime · before they blow up",
+  },
+  {
+    key: "feedback",
+    label: "Feedback",
+    hint: "Store reviews · social comments",
+  },
+] as const;
+
 export const PITCH_OPEN = {
   brand: "FounderHUD",
   eyebrow: "After you ship",
@@ -156,8 +180,11 @@ export const PITCH_OPEN = {
     "Problems stay hidden until something breaks",
   ],
   bridge: "What if the screen itself fed the HUD?",
-  bridgeSub: "Click a tab to see what we pull — then scroll into the cockpit.",
+  bridgeSub: "Click a tab — or hit the four signals — then scroll into the cockpit.",
   scrollHint: "Scroll to enter the HUD",
+  signalsCta: "All that… for four things",
+  signalsTitle: "What I’m really checking",
+  signalsSub: "Nine tabs. Four signals. One HUD.",
 };
 
 export const PITCH_CLOSE = {
@@ -174,7 +201,7 @@ export const PITCH_CLOSE = {
   },
   now: {
     title: "Now",
-    body: "Collection runs in the background. Revenue, costs, monitor, and reviews are already in the HUD.",
+    body: "Collection runs in the background. Revenue, costs, monitor, and feedback are already in the HUD.",
     caption: "Screenpipe · patrol · live",
   },
   /** Final slam — core stack */

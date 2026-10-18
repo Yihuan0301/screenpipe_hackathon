@@ -95,9 +95,10 @@ const DEEP_LINKS = {
   supabaseUsage:
     "https://supabase.com/dashboard/org/dqhfurerclflwieyeekj/usage?projectRef=vlyhuejpsebsduuhvniw",
   deepseekUsage: "https://platform.deepseek.com/usage",
+  /** 轻量实例详情 · 用量与监控 — 可用 PATROL_TENCENT_URL 覆盖 */
   tencentConsole:
     process.env.PATROL_TENCENT_URL ||
-    "https://console.cloud.tencent.com/expense/overview",
+    "https://console.cloud.tencent.com/lighthouse/instance/detail?searchParams=rid%3D1&rid=5&id=lhins-pgpizczn",
   ascTrends: "https://appstoreconnect.apple.com/trends/insights?pageid=8",
   /** ChunkFlow ASC Ratings（可用 PATROL_ASC_RATINGS_URL 覆盖）
    *  实测稳定深链是 /distribution/ratings/ios（不要用无 /ios 的短链，登录后常被甩到 /apps） */

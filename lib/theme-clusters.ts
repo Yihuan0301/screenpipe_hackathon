@@ -311,7 +311,7 @@ export function buildClustersPrompt(comments: FeedComment[]): string {
     .filter((b) => isUserReviewBody(b || ""))
     .slice(0, 80)
     .map((b, i) => `${i + 1}. ${(b || "").slice(0, 220)}`);
-  return `You cluster product reviews (Xiaohongshu + App Store) into 3–4 themes.
+  return `You cluster product reviews (Rednote + App Store) into 3–4 themes.
 
 Hard rules:
 - themeName and aiSummary MUST be idiomatic English only — never paste Chinese into the summary

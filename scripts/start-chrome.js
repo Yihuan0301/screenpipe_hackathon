@@ -57,6 +57,11 @@ function patchChromeExitFlags() {
   pref.browser.has_seen_welcome_page = true;
   pref.browser.exit_type = "Normal";
 
+  // 减少 “Something went wrong when opening your profile”
+  pref.signin = pref.signin || {};
+  pref.signin.allowed = true;
+  pref.credentials_enable_service = false;
+
   fs.writeFileSync(prefPath, JSON.stringify(pref));
 }
 

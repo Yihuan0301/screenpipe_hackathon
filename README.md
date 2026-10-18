@@ -1,41 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FounderHUD
 
-## Getting Started
+**Screen is the universal API.**
 
-First, run the development server:
+FounderHUD is a post-launch ops cockpit for indie developers. After you ship, revenue, costs, infra health, and user feedback live in nine different tabs. FounderHUD collapses them into four signals — **Revenue · Costs · Monitor · Feedback** — using:
+
+- **Screenpipe** — sees what’s on the screen  
+- **Playwright** — runs the workflow across consoles  
+- **FounderHUD** — one place to decide  
+
+Built for the Screenpipe hackathon.
+
+---
+
+## Project Description
+
+After I ship an app, my morning is still a pile of websites. App Store Connect for revenue. Gmail for bills. Cloudflare, Netlify, Fly, Supabase, DeepSeek, Tencent Cloud for infra. App Store ratings and Rednote for what users say. I jump between tabs, copy numbers, and by the time I’m done the data is already old.
+
+FounderHUD fixes that. It’s one dashboard for the four things I actually care about: **Revenue, Costs, Monitor, and Feedback**.
+
+You open the pitch page, scroll into the cockpit, and hit **Global Sync**. A real Chrome window opens the same sites I use every day. We capture what’s on screen, parse the numbers, and fill the HUD — live data, not fake demo stats. You can also Sync just one module if you only need Feedback or Monitor.
+
+The idea is simple: the sites stay where they are. You stop babysitting them by hand. Screen → workflow → one HUD.
+
+---
+
+## Technical Details
+
+**Stack:** Next.js UI (FounderHUD pitch + cockpit), Playwright patrol scripts, and **Screenpipe** for local screen context.
+
+**Screenpipe** runs on the machine (`localhost:3030`). While you work — or while patrol opens consoles — Screenpipe sees what’s on screen (OCR / screen context). The HUD checks that Screenpipe is healthy and can use that live signal so the product isn’t only “scrape a URL later”; it’s grounded in what actually appeared on the display.
+
+**Playwright patrol** drives a real Chrome profile, opens App Store Connect, Gmail, CF / Netlify / Fly / Supabase / DeepSeek / Tencent Cloud, ratings, and Rednote notes, scrolls, and saves page text into a local cache. The cockpit API reads that cache and turns it into cards: revenue, costs, monitor health, and comment/feedback views.
+
+**Global Sync** runs all four modules; each module Sync runs only that one. Screenpipe sees the screen. Patrol runs the workflow. FounderHUD shows what matters.
+
+---
+
+## Quick start
+
+### Requirements
+
+- macOS + Google Chrome  
+- Node.js 18+  
+- [Screenpipe](https://screenpi.pe) desktop app (API on `http://localhost:3030`)
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set in `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+SCREENPIPE_API_KEY=your_key_here
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start Screenpipe, then:
 
-## Learn More
+```bash
+# Terminal 1 — debug Chrome (login to your consoles once)
+npm run chrome:debug
 
-To learn more about Next.js, take a look at the following resources:
+# Terminal 2 — app
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open **http://localhost:3000**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Demo flow
 
-## Deploy on Vercel
+1. **Opening slide** — the tab farm; click a tab or “four signals”  
+2. **FounderHUD** — empty templates → **Global Sync** → live data fills the cards  
+3. Expand each module (Revenue / Costs / Monitor / Feedback)  
+4. **Closing slide** — Before → Now → core tech (screenpipe + Playwright)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture (simple)
 
-pkill -f "node scripts/patrol.js"
+| Layer | Role |
+|-------|------|
+| Screenpipe (`:3030`) | Local OCR / screen context |
+| Playwright patrol | Opens real dashboards, scrolls, captures page text |
+| FounderHUD UI | Pitch deck + live cockpit |
+
+Global Sync runs the full patrol (`npm run patrol:core` / UI button) across revenue, costs, monitor, and feedback targets.
+
+---
+
+## Data sources (patrol targets)
+
+Configured in `config/patrol-targets.js`.
+
+### Revenue
+
+| Source | URL |
+|--------|-----|
+| App Store Connect — Trends | https://appstoreconnect.apple.com/trends/insights?pageid=8 |
+
+### Costs
+
+| Source | URL |
+|--------|-----|
+| Gmail — billing / receipts search | Built in `config/patrol-targets.js` (`GMAIL_BILLS`) |
+
+### Monitor
+
+| Source | URL |
+|--------|-----|
+| Cloudflare | https://dash.cloudflare.com/168fef0b1e7e1631140a33e1c880bf01/domains/overview |
+| Netlify | https://app.netlify.com/teams/zhangyihuan0301/billing/general#content |
+| Fly.io | https://fly.io/dashboard/yihuan-227/billing |
+| Supabase | https://supabase.com/dashboard/org/dqhfurerclflwieyeekj/usage?projectRef=vlyhuejpsebsduuhvniw |
+| DeepSeek | https://platform.deepseek.com/usage |
+| Tencent Cloud (Lighthouse instance) | https://console.cloud.tencent.com/lighthouse/instance/detail?searchParams=rid%3D1&rid=5&id=lhins-pgpizczn |
+
+Optional override:
+
+```bash
+PATROL_TENCENT_URL=https://console.cloud.tencent.com/lighthouse/...
+```
+
+### Feedback
+
+| Source | URL |
+|--------|-----|
+| App Store Connect — Ratings | https://appstoreconnect.apple.com/apps/6795199051/distribution/ratings/ios |
+| Rednote notes | `PATROL_XHS_NOTE_URLS=url1,url2` in `.env.local` |
+
+---
+
+## Commands
+
+```bash
+npm run chrome:debug    # Debug Chrome for console logins
+npm run dev             # UI at http://localhost:3000
+npm run patrol:core     # Full patrol (same as Global Sync)
+npm run patrol:comments # Feedback targets only
+```
+
+If a patrol gets stuck:
+
+```bash
+pkill -f "node scripts/patrol.js" || true
 rm -f data/.patrol.lock
+```
 
-npm run patrol:comments
+---
+
+## Notes for reviewers
+
+- Keep Screenpipe running so the HUD shows **Screenpipe Live**  
+- Use the debug Chrome profile for Sync — not your everyday browser  
+- `.env.local` and `data/` are gitignored (secrets / capture cache)  
+- Cards start empty on purpose for the pitch; **Global Sync** injects real consoles, not mock numbers  
+
+---
+
+## One line
+
+**See the screen. Run the workflow. Get what matters.**

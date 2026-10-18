@@ -1254,10 +1254,13 @@ async function patrolUrl(page, mod, url, index, total) {
         capturedAt: new Date().toISOString(),
       };
     }
-    // 登录后不要停在 /apps 或 inflight —— ASC 直接强跳 ratings/ios
-    const resumeUrl = /appstoreconnect\.apple\.com/i.test(url)
-      ? ascRatingsUrlFrom(url)
-      : url;
+    // ASC：评论模块强跳 ratings；收入 Trends 必须回到 trends，不能踢去评价页
+    const wantsAscRatings =
+      mod.id === "comments" || /\/ratings\b/i.test(url);
+    const resumeUrl =
+      /appstoreconnect\.apple\.com/i.test(url) && wantsAscRatings
+        ? ascRatingsUrlFrom(url)
+        : url;
     console.log(`  → 登录后强跳 ${resumeUrl.slice(0, 80)}`);
     try {
       await page.goto(resumeUrl, {
@@ -1281,8 +1284,11 @@ async function patrolUrl(page, mod, url, index, total) {
     /appstoreconnect\.apple\.com/i.test(finalUrl) ||
     /appstoreconnect\.apple\.com/i.test(url);
 
-  // ASC：别停在 version/inflight；进不去就放弃抓取（演示绝不能假数据）
-  if (isAsc && !check.blocked) {
+  // ASC Ratings（comments）：别停在 version/inflight；进不去就放弃抓取
+  // ASC Trends（revenue）：绝不能踢去 ratings，否则收入永远抓不到
+  const wantsAscRatings =
+    mod.id === "comments" || /\/ratings\b/i.test(url);
+  if (isAsc && !check.blocked && wantsAscRatings) {
     const onRatings = await ensureAscRatingsPage(page);
     if (!onRatings || !isAscRatingsUrl(page.url())) {
       console.error(
@@ -1300,6 +1306,21 @@ async function patrolUrl(page, mod, url, index, total) {
     }
     // 登录刚跳进来时常是空壳——先等评价正文，再滚
     await waitForAscRatingsContent(page);
+    text = await capturePageText(page);
+    finalUrl = page.url();
+  } else if (
+    isAsc &&
+    !check.blocked &&
+    mod.id === "revenue" &&
+    /trends/i.test(url)
+  ) {
+    if (!/trends/i.test(page.url())) {
+      console.log(`  → asc: revenue resume Trends → ${url.slice(0, 72)}`);
+      await page
+        .goto(url, { waitUntil: "domcontentloaded", timeout: 90_000 })
+        .catch((e) => console.warn("  → asc: trends goto", e.message || e));
+      await page.waitForTimeout(2500);
+    }
     text = await capturePageText(page);
     finalUrl = page.url();
   } else if (
@@ -1343,9 +1364,9 @@ async function patrolUrl(page, mod, url, index, total) {
     mod.xhsEnrich &&
     /xiaohongshu\.com\/(explore|discovery\/item)/i.test(finalUrl);
 
-  // ASC：小步慢滚（演示可见）；其它页：滚到底停
+  // ASC Ratings：小步慢滚；Trends / 其它页：滚到底停
   if (passes > 0 && !useXhsPanel) {
-    if (isAsc) {
+    if (isAsc && wantsAscRatings) {
       await scrollAscRatingsUntilBottom(page, {
         maxPasses: 12,
         delta: 420,

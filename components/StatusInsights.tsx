@@ -55,7 +55,7 @@ const PRIMARY_KEYS: Record<PlatformId, string[]> = {
   fly: ["Status", "Machines", "Last invoice", "Upcoming", "Credit bal"],
   supabase: ["MAU", "DB size", "Egress", "Edge fns", "Plan"],
   deepseek: ["Topped-up", "30d cost", "API requests", "Tokens", "flash req"],
-  tencent: ["Balance", "Signal", "Source"],
+  tencent: ["Traffic", "Disk", "CPU", "Memory", "Signal"],
 };
 
 function relativeTime(iso?: string) {
