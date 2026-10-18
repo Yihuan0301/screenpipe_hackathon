@@ -1,0 +1,37 @@
+{
+  "name": "launch-shadow-os",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "chrome:debug": "node scripts/start-chrome.js",
+    "login:cdp": "node scripts/login-cdp.js",
+    "patrol": "node scripts/patrol.js",
+    "patrol:core": "node scripts/patrol.js core",
+    "patrol:comments": "node scripts/patrol.js comments",
+    "patrol:login": "node scripts/login-setup.js",
+    "comments:structured": "node scripts/write-comments-structured.js"
+  },
+  "dependencies": {
+    "framer-motion": "^14.3.0",
+    "lucide-react": "^1.59.0",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-simple-maps": "^5.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "playwright": "^1.64.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
